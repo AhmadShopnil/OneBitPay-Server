@@ -44,7 +44,7 @@ async function run() {
                     status: false
                 })
             }
-            console.log(result)
+
         })
 
         // get user  single info from database START
@@ -83,7 +83,9 @@ async function run() {
                 })
             }
             else {
-
+                res.send({
+                    status: false,
+                })
             }
 
         })
@@ -101,7 +103,9 @@ async function run() {
                 })
             }
             else {
-
+                res.send({
+                    status: false,
+                })
             }
 
         })
