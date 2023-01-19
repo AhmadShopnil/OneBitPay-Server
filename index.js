@@ -20,7 +20,7 @@ async function run() {
 
 
         // save user info in database
-        app.get('/addUser', async (req, res) => {
+        app.post('/addUser', async (req, res) => {
 
             // demo user creation
             // const user = {
@@ -30,8 +30,8 @@ async function run() {
             //     'balance': 20000,
             //     'address': 'Tangail'
             // }
-            // const user = req.body
 
+            const user = req.body
             const result = await userCollection.insertOne(user)
             if (result.acknowledged) {
                 res.send({
@@ -116,34 +116,35 @@ async function run() {
 
         // transfer money START
         app.put('/sendMoney', async (req, res) => {
-            // const sendMoneyInfo = req.body
-
+            const sendMoneyInfo = req.body
+            // console.log(sendMoneyInfo)
             // demo senderinfo
-            const sendMoneyInfo = {
-                'senderEmail': 'shopnil@gmail.com',
-                'receiverEmail': 'rakib@gmail.com',
-                'amount': 1000
-            }
+            // const sendMoneyInfo = {
+            //     'senderEmail': 'shopnil@gmail.com',
+            //     'receiverEmail': 'rakib@gmail.com',
+            //     'amount': 1000
+            // }
 
             const { senderEmail, receiverEmail, amount } = sendMoneyInfo
 
             // Decrease amount receiver account
             const result1 = await userCollection.findOne({ userEmail: senderEmail })
             const senderBalance = result1.balance
-            const senderNewBalance = senderBalance - amount
+            const senderNewBalance = parseInt(senderBalance) - parseInt(amount)
             const result2 = await userCollection.updateOne({ userEmail: senderEmail }, { $set: { balance: senderNewBalance } })
 
             // add amount receiver account
             const result3 = await userCollection.findOne({ userEmail: receiverEmail })
             const receiverBalance = result3.balance
-            const receiverNewBalance = receiverBalance + amount
+            const receiverNewBalance = parseInt(receiverBalance) + parseInt(amount)
             const result4 = await userCollection.updateOne({ userEmail: receiverEmail }, { $set: { balance: receiverNewBalance } })
 
             const info = {
                 senderEmail,
                 receiverEmail,
                 amount,
-                transactionId: 456
+                transactionId: parseInt(Math.random() * 10000000000)
+
             }
 
             const transactionInfo = await transactionCollection.insertOne(info)
@@ -158,7 +159,22 @@ async function run() {
         })
         // transfer money END
 
+        // update user info
+        app.put('updateInfo/:id', async (req, res) => {
 
+            const id = req.params.id
+            const updatedInfo = req.body;
+            const { } = updatedInfo
+
+            const result = await userCollection.updateOne({ _id: ObjectId(id) }, { $set: {} })
+
+            if (result.modifiedCount) {
+                res.send({
+                    status: true
+                })
+            }
+
+        })
 
 
 
