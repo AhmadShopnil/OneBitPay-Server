@@ -3,7 +3,15 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
-const app = express()
+const app = express();
+const crypto = require('crypto');
+const { toUnicode } = require('punycode');
+
+const sid = process.env.ACCOUNT_SID
+const authToken = process.env.AUTH_TOKEN
+const phone = process.env.PHONE_NUMBER
+
+const clientMSG = require('twilio')(sid, authToken)
 
 app.use(cors());
 app.use(express.json());
@@ -14,8 +22,9 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
 
     try {
-        const userCollection = client.db('OneBitPay').collection('Users')
-        const transactionCollection = client.db('OneBitPay').collection('Transactions')
+        const userCollection = client.db('OneBitPay').collection('Users');
+        const transactionCollection = client.db('OneBitPay').collection('Transactions');
+        const rechargeCollection = client.db('OneBitPay').collection('rechargeCollection');
 
 
 
@@ -50,7 +59,6 @@ async function run() {
         // get user  single info from database START
         app.get('/user/:email', async (req, res) => {
             const email = req.params.email;
-            console.log(email)
             const query = { userEmail: email }
             const result = await userCollection.findOne(query)
 
@@ -131,7 +139,7 @@ async function run() {
             const result1 = await userCollection.findOne({ userEmail: senderEmail })
             const senderBalance = result1.balance
             const senderNewBalance = parseInt(senderBalance) - parseInt(amount)
-            const result2 = await userCollection.updateOne({ userEmail: senderEmail }, { $set: { balance: senderNewBalance } })
+            const result2 = await userCollection.updateOne({ userEmail: senderEmail }, { $set: { balance: senderNewBalance } });
 
             // add amount receiver account
             const result3 = await userCollection.findOne({ userEmail: receiverEmail })
@@ -174,6 +182,36 @@ async function run() {
                 })
             }
 
+        });
+
+        // Mobile Recharge by shamim-s
+        app.post('/mobile/recharge', async (req, res) => {
+            const userDetail = req.body;
+            const trxID = crypto.randomBytes(6).toString('hex').toUpperCase();
+            const recharge = {
+                userphone: userDetail.phone,
+                balance: userDetail.balance,
+                userEmail: userDetail.userEmail,
+                trxID, 
+
+            }
+
+            clientMSG.messages
+            .create({
+                body: "You have receivedrecharge form OneBitPay. YourTransaction ID is" + `${trxID}`,
+                from: "+18782058284",
+                to: "+8801717547898",
+            })
+            .then(message => console.log(message.sid));
+
+            //minus user balance after recharge
+            const result1 = await userCollection.findOne({ userEmail: userDetail.userEmail })
+            const senderNewBalance = parseInt(result1.balance) - parseInt(userDetail.balance)
+            const result2 = await userCollection.updateOne({userEmail: userDetail.userEmail}, { $set: { balance: senderNewBalance } });
+
+            const result = await rechargeCollection.insertOne(recharge);
+            res.send(recharge);
+            console.log(recharge);
         })
 
 
