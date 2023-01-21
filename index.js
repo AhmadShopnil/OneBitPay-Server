@@ -76,27 +76,26 @@ async function run() {
         // get user  single info from database END
 
 
-        // get transaction  info from database START
-
+        // //get transaction  info from database START -----------------------
         // received history
-        app.get('/transactionReceive/:email', async (req, res) => {
-            const email = req.params.email;
-            const query = { receiverEmail: email }
-            const result = await transactionCollection.find(query).toArray()
+        // app.get('/transactionReceive/:email', async (req, res) => {
+        //     const email = req.params.email;
+        //     const query = { receiverEmail: email }
+        //     const result = await transactionCollection.find(query).toArray()
 
-            if (result) {
-                res.send({
-                    status: true,
-                    data: result
-                })
-            }
-            else {
-                res.send({
-                    status: false,
-                })
-            }
+        //     if (result) {
+        //         res.send({
+        //             status: true,
+        //             data: result
+        //         })
+        //     }
+        //     else {
+        //         res.send({
+        //             status: false,
+        //         })
+        //     }
 
-        })
+        // })
 
         // Sending history
         app.get('/transactionSend/:email', async (req, res) => {
@@ -134,7 +133,7 @@ async function run() {
             //     'amount': 1000
             // }
 
-            const { senderEmail, receiverEmail, amount } = sendMoneyInfo
+            const { senderEmail, receiverEmail, amount, time } = sendMoneyInfo
 
             // Decrease amount receiver account
             const result1 = await userCollection.findOne({ userEmail: senderEmail })
@@ -152,6 +151,7 @@ async function run() {
                 senderEmail,
                 receiverEmail,
                 amount,
+                time,
                 transactionId: crypto.randomBytes(6).toString('hex').toUpperCase()
 
             }
