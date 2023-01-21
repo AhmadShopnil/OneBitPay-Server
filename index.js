@@ -101,8 +101,9 @@ async function run() {
         // Sending history
         app.get('/transactionSend/:email', async (req, res) => {
             const email = req.params.email;
-            const query = { senderEmail: email }
-            const result = await transactionCollection.find(query).toArray()
+            const query = {};
+            const allresult = await transactionCollection.find(query).toArray();
+            const result = allresult.filter(relt => relt.senderEmail === email || relt.receiverEmail === email);
 
             if (result) {
                 res.send({
@@ -151,7 +152,7 @@ async function run() {
                 senderEmail,
                 receiverEmail,
                 amount,
-                transactionId: parseInt(Math.random() * 10000000000)
+                transactionId: crypto.randomBytes(6).toString('hex').toUpperCase()
 
             }
 
@@ -198,7 +199,7 @@ async function run() {
 
             clientMSG.messages
             .create({
-                body: "You have receivedrecharge form OneBitPay. YourTransaction ID is" + `${trxID}`,
+                body: `You received ${userDetail.balance} $ recharge form OneBitPay, Your transaction id is ${trxID}. For more info please visit https://one-bit-pay-server.vercel.app/`,
                 from: "+18782058284",
                 to: "+8801717547898",
             })
@@ -212,6 +213,14 @@ async function run() {
             const result = await rechargeCollection.insertOne(recharge);
             res.send(recharge);
             console.log(recharge);
+        });
+
+        //Get Recharge Information by user email
+        app.get('/recharge/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {userEmail: email};
+            const result = await rechargeCollection.find(query).toArray();
+            res.send(result);
         })
 
 
