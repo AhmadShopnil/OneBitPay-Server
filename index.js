@@ -101,7 +101,7 @@ async function run() {
         app.get('/transactionSend/:email', async (req, res) => {
             const email = req.params.email;
             const query = {};
-            const allresult = await transactionCollection.find(query).toArray();
+            const allresult = await transactionCollection.find(query).sort({$natural:-1}).toArray();
             const result = allresult.filter(relt => relt.senderEmail === email || relt.receiverEmail === email);
 
             if (result) {
