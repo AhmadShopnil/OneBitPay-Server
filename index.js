@@ -25,6 +25,7 @@ async function run() {
         const userCollection = client.db('OneBitPay').collection('Users');
         const transactionCollection = client.db('OneBitPay').collection('Transactions');
         const rechargeCollection = client.db('OneBitPay').collection('rechargeCollection');
+        const agentsRequests = client.db('OneBitPay').collection('agentsRequests');
 
 
 
@@ -224,6 +225,25 @@ async function run() {
         })
 
 
+        //Inster agents requets data
+        app.post('/agents/request', async(req, res) => {
+            const agentInfo = req.body;
+            const result = await agentsRequests.insertOne(agentInfo);
+            res.send(result);
+        })
+
+        //One time apdate all datbase users data
+        // app.get('/update/users', async(req, res) => {
+        //     const query = {}
+        //     const option = {upsert: true};
+        //     const updatedDoc = {
+        //         $set: {
+        //             isAgent: false,
+        //         }
+        //     }
+        //     const result = await userCollection.updateMany(query, updatedDoc, option);
+        //     res.send(result);
+        // })
 
     }
     catch {
