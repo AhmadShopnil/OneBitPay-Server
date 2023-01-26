@@ -11,9 +11,10 @@ const sid = process.env.ACCOUNT_SID
 const authToken = process.env.AUTH_TOKEN
 const phone = process.env.PHONE_NUMBER
 
-const clientMSG = require('twilio')(sid, authToken)
+const clientMSG = require('twilio')(sid, authToken);
 
 app.use(cors());
+
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.tus40xp.mongodb.net/?retryWrites=true&w=majority`;
@@ -192,26 +193,26 @@ async function run() {
                 userphone: userDetail.phone,
                 balance: userDetail.balance,
                 userEmail: userDetail.userEmail,
-                trxID, 
+                trxID,
 
             }
 
             clientMSG.messages
-            .create({
-                body: "You have receivedrecharge form OneBitPay. YourTransaction ID is" + `${trxID}`,
-                from: "+18782058284",
-                to: "+8801717547898",
-            })
-            .then(message => console.log(message.sid));
+                .create({
+                    body: "You have receivedrecharge form OneBitPay. YourTransaction ID is" + `${trxID}`,
+                    from: "+18782058284",
+                    to: "+8801717547898",
+                })
+                .then(message => console.log(message.sid));
 
             //minus user balance after recharge
             const result1 = await userCollection.findOne({ userEmail: userDetail.userEmail })
             const senderNewBalance = parseInt(result1.balance) - parseInt(userDetail.balance)
-            const result2 = await userCollection.updateOne({userEmail: userDetail.userEmail}, { $set: { balance: senderNewBalance } });
+            const result2 = await userCollection.updateOne({ userEmail: userDetail.userEmail }, { $set: { balance: senderNewBalance } });
 
             const result = await rechargeCollection.insertOne(recharge);
             res.send(recharge);
-            console.log(recharge);
+            // console.log(recharge);
         })
 
 
