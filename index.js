@@ -26,6 +26,8 @@ async function run() {
         const userCollection = client.db('OneBitPay').collection('Users');
         const transactionCollection = client.db('OneBitPay').collection('Transactions');
         const rechargeCollection = client.db('OneBitPay').collection('rechargeCollection');
+        const agentsRequests = client.db('OneBitPay').collection('agentsRequests');
+        const blogsCollection = client.db('OneBitPay').collection('blogs');
 
 
 
@@ -77,33 +79,33 @@ async function run() {
         // get user  single info from database END
 
 
-        // get transaction  info from database START
-
+        // //get transaction  info from database START -----------------------
         // received history
-        app.get('/transactionReceive/:email', async (req, res) => {
-            const email = req.params.email;
-            const query = { receiverEmail: email }
-            const result = await transactionCollection.find(query).toArray()
+        // app.get('/transactionReceive/:email', async (req, res) => {
+        //     const email = req.params.email;
+        //     const query = { receiverEmail: email }
+        //     const result = await transactionCollection.find(query).toArray()
 
-            if (result) {
-                res.send({
-                    status: true,
-                    data: result
-                })
-            }
-            else {
-                res.send({
-                    status: false,
-                })
-            }
+        //     if (result) {
+        //         res.send({
+        //             status: true,
+        //             data: result
+        //         })
+        //     }
+        //     else {
+        //         res.send({
+        //             status: false,
+        //         })
+        //     }
 
-        })
+        // })
 
         // Sending history
         app.get('/transactionSend/:email', async (req, res) => {
             const email = req.params.email;
-            const query = { senderEmail: email }
-            const result = await transactionCollection.find(query).toArray()
+            const query = {};
+            const allresult = await transactionCollection.find(query).sort({ $natural: -1 }).toArray();
+            const result = allresult.filter(relt => relt.senderEmail === email || relt.receiverEmail === email);
 
             if (result) {
                 res.send({
@@ -134,7 +136,7 @@ async function run() {
             //     'amount': 1000
             // }
 
-            const { senderEmail, receiverEmail, amount } = sendMoneyInfo
+            const { senderEmail, receiverEmail, amount, time } = sendMoneyInfo
 
             // Decrease amount receiver account
             const result1 = await userCollection.findOne({ userEmail: senderEmail })
@@ -152,7 +154,8 @@ async function run() {
                 senderEmail,
                 receiverEmail,
                 amount,
-                transactionId: parseInt(Math.random() * 10000000000)
+                time,
+                transactionId: crypto.randomBytes(6).toString('hex').toUpperCase()
 
             }
 
@@ -199,7 +202,7 @@ async function run() {
 
             clientMSG.messages
                 .create({
-                    body: "You have receivedrecharge form OneBitPay. YourTransaction ID is" + `${trxID}`,
+                    body: `You received ${userDetail.balance} $ recharge form OneBitPay, Your transaction id is ${trxID}. For more info please visit https://one-bit-pay-server.vercel.app/`,
                     from: "+18782058284",
                     to: "+8801717547898",
                 })
@@ -212,10 +215,74 @@ async function run() {
 
             const result = await rechargeCollection.insertOne(recharge);
             res.send(recharge);
-            // console.log(recharge);
+            console.log(recharge);
+        });
+
+        //Get Recharge Information by user email
+        app.get('/recharge/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { userEmail: email };
+            const result = await rechargeCollection.find(query).toArray();
+            res.send(result);
         })
 
 
+        //Inster agents requets data
+        app.post('/agents/request', async (req, res) => {
+            const agentInfo = req.body;
+            const result = await agentsRequests.insertOne(agentInfo);
+            res.send(result);
+        })
+
+        //One time apdate all datbase users data
+        // app.get('/update/users', async(req, res) => {
+        //     const query = {}
+        //     const option = {upsert: true};
+        //     const updatedDoc = {
+        //         $set: {
+        //             isAgent: false,
+        //         }
+        //     }
+        //     const result = await userCollection.updateMany(query, updatedDoc, option);
+        //     res.send(result);
+        // })
+
+        app.put('/userUpdate/:email', async (req, res) => {
+            const email = req.params.email;
+            const updatedUserData = req.body;
+            const query = {
+                userEmail: email
+            };
+            const options = {
+                upsert: true
+            };
+            const updatedDoc = {
+                $set: {
+                    name: updatedUserData.name,
+                    address: updatedUserData.address,
+                    imageUrl: updatedUserData.imageUrl,
+                    nidNumber: updatedUserData.nidNumber,
+                    phnNumber: updatedUserData.phnNumber,
+                    birthDate: updatedUserData.birthDate,
+                }
+            };
+            const result = await userCollection.updateOne(query, updatedDoc, options);
+            res.send(result);
+        })
+
+
+        app.get('/blogs', async (req, res) => {
+            const query = {}
+            const result = await blogsCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.get('/blogs/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await blogsCollection.findOne(query)
+            res.send(result)
+        })
 
     }
     catch {
