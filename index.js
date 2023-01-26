@@ -27,7 +27,7 @@ async function run() {
         const transactionCollection = client.db('OneBitPay').collection('Transactions');
         const rechargeCollection = client.db('OneBitPay').collection('rechargeCollection');
         const agentsRequests = client.db('OneBitPay').collection('agentsRequests');
-        const blogsCollection = client.db('OneBitPay').collection('blogs');
+        const blogsCollection = client.db('OneBitPay').collection('blogs'); const donationCollection = client.db('OneBitPay').collection('Donations');
 
 
 
@@ -281,6 +281,20 @@ async function run() {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
             const result = await blogsCollection.findOne(query)
+            res.send(result)
+        })
+
+
+        app.get('/donations', async (req, res) => {
+            const query = {}
+            const result = await donationCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.get('/donations/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await donationCollection.findOne(query)
             res.send(result)
         })
 
