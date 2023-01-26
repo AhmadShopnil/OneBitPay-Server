@@ -102,7 +102,7 @@ async function run() {
         app.get('/transactionSend/:email', async (req, res) => {
             const email = req.params.email;
             const query = {};
-            const allresult = await transactionCollection.find(query).sort({$natural:-1}).toArray();
+            const allresult = await transactionCollection.find(query).sort({ $natural: -1 }).toArray();
             const result = allresult.filter(relt => relt.senderEmail === email || relt.receiverEmail === email);
 
             if (result) {
@@ -194,22 +194,22 @@ async function run() {
                 userphone: userDetail.phone,
                 balance: userDetail.balance,
                 userEmail: userDetail.userEmail,
-                trxID, 
+                trxID,
 
             }
 
             clientMSG.messages
-            .create({
-                body: `You received ${userDetail.balance} $ recharge form OneBitPay, Your transaction id is ${trxID}. For more info please visit https://one-bit-pay-server.vercel.app/`,
-                from: "+18782058284",
-                to: "+8801717547898",
-            })
-            .then(message => console.log(message.sid));
+                .create({
+                    body: `You received ${userDetail.balance} $ recharge form OneBitPay, Your transaction id is ${trxID}. For more info please visit https://one-bit-pay-server.vercel.app/`,
+                    from: "+18782058284",
+                    to: "+8801717547898",
+                })
+                .then(message => console.log(message.sid));
 
             //minus user balance after recharge
             const result1 = await userCollection.findOne({ userEmail: userDetail.userEmail })
             const senderNewBalance = parseInt(result1.balance) - parseInt(userDetail.balance)
-            const result2 = await userCollection.updateOne({userEmail: userDetail.userEmail}, { $set: { balance: senderNewBalance } });
+            const result2 = await userCollection.updateOne({ userEmail: userDetail.userEmail }, { $set: { balance: senderNewBalance } });
 
             const result = await rechargeCollection.insertOne(recharge);
             res.send(recharge);
@@ -217,16 +217,16 @@ async function run() {
         });
 
         //Get Recharge Information by user email
-        app.get('/recharge/:email', async(req, res) => {
+        app.get('/recharge/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {userEmail: email};
+            const query = { userEmail: email };
             const result = await rechargeCollection.find(query).toArray();
             res.send(result);
         })
 
 
         //Inster agents requets data
-        app.post('/agents/request', async(req, res) => {
+        app.post('/agents/request', async (req, res) => {
             const agentInfo = req.body;
             const result = await agentsRequests.insertOne(agentInfo);
             res.send(result);
@@ -244,6 +244,29 @@ async function run() {
         //     const result = await userCollection.updateMany(query, updatedDoc, option);
         //     res.send(result);
         // })
+
+        app.put('/userUpdate/:email', async (req, res) => {
+            const email = req.params.email;
+            const updatedUserData = req.body;
+            const query = {
+                userEmail: email
+            };
+            const options = {
+                upsert: true
+            };
+            const updatedDoc = {
+                $set: {
+                    name: updatedUserData.name,
+                    address: updatedUserData.address,
+                    imageUrl: updatedUserData.imageUrl,
+                    nidNumber: updatedUserData.nidNumber,
+                    phnNumber: updatedUserData.phnNumber,
+                    birthDate: updatedUserData.birthDate,
+                }
+            };
+            const result = await userCollection.updateOne(query, updatedDoc, options);
+            res.send(result);
+        })
 
     }
     catch {
