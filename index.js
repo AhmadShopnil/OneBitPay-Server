@@ -136,7 +136,7 @@ async function run() {
             //     'amount': 1000
             // }
 
-            const { senderEmail, receiverEmail, amount, time } = sendMoneyInfo
+            const { senderEmail, receiverEmail, amount, time, type } = sendMoneyInfo
 
             // Decrease amount receiver account
             const result1 = await userCollection.findOne({ userEmail: senderEmail })
@@ -155,7 +155,8 @@ async function run() {
                 receiverEmail,
                 amount,
                 time,
-                transactionId: crypto.randomBytes(6).toString('hex').toUpperCase()
+                transactionId: crypto.randomBytes(6).toString('hex').toUpperCase(),
+                type
 
             }
 
