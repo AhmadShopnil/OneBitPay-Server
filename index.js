@@ -197,6 +197,7 @@ async function run() {
                 balance: userDetail.balance,
                 userEmail: userDetail.userEmail,
                 trxID,
+                date: userDetail.time,
 
             }
 
