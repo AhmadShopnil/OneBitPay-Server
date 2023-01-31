@@ -148,7 +148,7 @@ async function run() {
             const result3 = await userCollection.findOne({ userEmail: receiverEmail })
             const receiverBalance = result3.balance
             const receiverNewBalance = parseInt(receiverBalance) + parseInt(amount)
-            const result4 = await userCollection.updateOne({ userEmail: receiverEmail }, { $set: { balance: receiverNewBalance } })
+            const result4 = await userCollection.updateOne({ userEmail: receiverEmail }, { $set: { balance: receiverNewBalance, notification: true } })
 
             const info = {
                 senderEmail,
@@ -297,6 +297,22 @@ async function run() {
             const query = { _id: ObjectId(id) }
             const result = await donationCollection.findOne(query)
             res.send(result)
+        })
+        app.get('/notification/:email', async (req, res) => {
+            const email = req.params.email;
+            // const query = { userEmail: email }
+            const result = await userCollection.updateOne({ userEmail: email }, { $set: { notification: false } })
+
+            if (result) {
+                res.send({
+                    status: true,
+                    data: result
+                })
+            }
+            else {
+
+            }
+
         })
 
     }
