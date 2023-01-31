@@ -156,7 +156,8 @@ async function run() {
                 amount,
                 time,
                 transactionId: crypto.randomBytes(6).toString('hex').toUpperCase(),
-                type
+                type,
+                notification: true
 
             }
 
