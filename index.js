@@ -28,6 +28,7 @@ async function run() {
         const rechargeCollection = client.db('OneBitPay').collection('rechargeCollection');
         const agentsRequests = client.db('OneBitPay').collection('agentsRequests');
         const blogsCollection = client.db('OneBitPay').collection('blogs'); const donationCollection = client.db('OneBitPay').collection('Donations');
+        const cashInCollection = client.db('OneBitPay').collection('cashIn');
 
 
 
@@ -224,7 +225,7 @@ async function run() {
         app.get('/recharge/:email', async (req, res) => {
             const email = req.params.email;
             const query = { userEmail: email };
-            const result = await rechargeCollection.find(query).toArray();
+            const result = await rechargeCollection.find(query).sort({ $natural: -1 }).toArray();
             res.send(result);
         })
 
@@ -236,13 +237,14 @@ async function run() {
             res.send(result);
         })
 
-        //One time apdate all datbase users data
-        // app.get('/update/users', async(req, res) => {
-        //     const query = {}
+        // One time update all datbase users data
+        // app.get('/updateee/:email', async(req, res) => {
+        //     const email = req.params.email;
+        //     const query = {userEmail: email}
         //     const option = {upsert: true};
         //     const updatedDoc = {
         //         $set: {
-        //             isAgent: false,
+        //             commission: 0,
         //         }
         //     }
         //     const result = await userCollection.updateMany(query, updatedDoc, option);
@@ -299,6 +301,72 @@ async function run() {
             const result = await donationCollection.findOne(query)
             res.send(result)
         })
+
+        //Checking agents status
+        app.get('/user/agent/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {userEmail: email};
+            const user = await userCollection.findOne(query);
+            res.send({isAgent: user.role === 'agent'});
+          })
+
+        //Checking Admin status
+        app.get('/user/admin/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {userEmail: email};
+            const user = await userCollection.findOne(query);
+            res.send({isAdmin: user.role === 'admin'});
+          })
+
+        //Checking user status
+        app.get('/user/normaluser/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {userEmail: email};
+            const user = await userCollection.findOne(query);
+            res.send({isUser: user.role === 'user'});
+          })
+
+          // Cash in from agent account to user account
+          app.put('/agent/cashin', async (req, res) => {
+            const data = req.body;
+            const {receiverEmail, agentEmail, amount} = data;
+            const commi = (parseInt(amount)/100) * 8;
+
+            const user = await userCollection.findOne({userEmail: receiverEmail});
+            const agent = await userCollection.findOne({userEmail: agentEmail});
+
+            //Updationg agent balance and commission------------------
+            const agentQuery = {userEmail: agentEmail};
+            const Agentoption = {upsert: true};
+            const AgentupdatedDoc = {
+                $set: {
+                    balance: parseInt(agent.balance) - parseInt(amount),
+                    commission: parseFloat(parseFloat(agent.commission) + parseFloat(commi)).toFixed(2)
+                }
+            }
+            const agentResult = await userCollection.updateOne(agentQuery, AgentupdatedDoc, Agentoption);
+
+
+            //Updating user balance-----------------------
+            const userQuery = {userEmail: receiverEmail};
+            const userOption = {upsert: true};
+            const userUpdatedDoc = {
+                $set: {
+                    balance: parseInt(user.balance) + parseInt(amount)
+                }
+            }
+            const userResult = await userCollection.updateOne(userQuery, userUpdatedDoc, userOption);
+
+            res.send({userResult, agentResult})
+          })
+
+          app.get('/get/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = {userEmail: email};
+            const result = await userCollection.findOne(query);
+            res.send(result);
+          })
+
 
     }
     catch {
