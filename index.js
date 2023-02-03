@@ -65,7 +65,6 @@ async function run() {
             const email = req.params.email;
             const query = { userEmail: email }
             const result = await userCollection.findOne(query)
-
             if (result) {
                 res.send({
                     status: true,
@@ -219,7 +218,7 @@ async function run() {
 
             const result = await rechargeCollection.insertOne(recharge);
             res.send(recharge);
-            console.log(recharge);
+
         });
 
         //Get Recharge Information by user email
@@ -320,41 +319,41 @@ async function run() {
         })
 
         //Checking agents status
-        app.get('/user/agent/:email', async(req, res) => {
+        app.get('/user/agent/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {userEmail: email};
+            const query = { userEmail: email };
             const user = await userCollection.findOne(query);
-            res.send({isAgent: user.role === 'agent'});
-          })
+            res.send({ isAgent: user.role === 'agent' });
+        })
 
         //Checking Admin status
-        app.get('/user/admin/:email', async(req, res) => {
+        app.get('/user/admin/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {userEmail: email};
+            const query = { userEmail: email };
             const user = await userCollection.findOne(query);
-            res.send({isAdmin: user.role === 'admin'});
-          })
+            res.send({ isAdmin: user.role === 'admin' });
+        })
 
         //Checking user status
-        app.get('/user/normaluser/:email', async(req, res) => {
+        app.get('/user/normaluser/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {userEmail: email};
+            const query = { userEmail: email };
             const user = await userCollection.findOne(query);
-            res.send({isUser: user.role === 'user'});
-          })
+            res.send({ isUser: user.role === 'user' });
+        })
 
-          // Cash in from agent account to user account
-          app.put('/agent/cashin', async (req, res) => {
+        // Cash in from agent account to user account
+        app.put('/agent/cashin', async (req, res) => {
             const data = req.body;
-            const {receiverEmail, agentEmail, amount} = data;
-            const commi = (parseInt(amount)/100) * 8;
+            const { receiverEmail, agentEmail, amount } = data;
+            const commi = (parseInt(amount) / 100) * 8;
 
-            const user = await userCollection.findOne({userEmail: receiverEmail});
-            const agent = await userCollection.findOne({userEmail: agentEmail});
+            const user = await userCollection.findOne({ userEmail: receiverEmail });
+            const agent = await userCollection.findOne({ userEmail: agentEmail });
 
             //Updationg agent balance and commission------------------
-            const agentQuery = {userEmail: agentEmail};
-            const Agentoption = {upsert: true};
+            const agentQuery = { userEmail: agentEmail };
+            const Agentoption = { upsert: true };
             const AgentupdatedDoc = {
                 $set: {
                     balance: parseInt(agent.balance) - parseInt(amount),
@@ -365,8 +364,8 @@ async function run() {
 
 
             //Updating user balance-----------------------
-            const userQuery = {userEmail: receiverEmail};
-            const userOption = {upsert: true};
+            const userQuery = { userEmail: receiverEmail };
+            const userOption = { upsert: true };
             const userUpdatedDoc = {
                 $set: {
                     balance: parseInt(user.balance) + parseInt(amount)
@@ -374,15 +373,15 @@ async function run() {
             }
             const userResult = await userCollection.updateOne(userQuery, userUpdatedDoc, userOption);
 
-            res.send({userResult, agentResult})
-          })
+            res.send({ userResult, agentResult })
+        })
 
-          app.get('/get/user/:email', async (req, res) => {
+        app.get('/get/user/:email', async (req, res) => {
             const email = req.params.email;
-            const query = {userEmail: email};
+            const query = { userEmail: email };
             const result = await userCollection.findOne(query);
             res.send(result);
-          })
+        })
 
 
     }
