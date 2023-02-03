@@ -383,7 +383,37 @@ async function run() {
             res.send(result);
         })
 
+          // get all users info from database START
+        app.get('/users', async(req, res) => {
+            const query = {};
+            const users = await userCollection.find(query).toArray();
+            res.send(users)
+        });
+        // get all users info from database END
+        
+        // get admin data START
+        app.get('/users/admin/:email', async(req, res) => {
+            const email  = req.params.email;
+            const query = {email};
+            const user = await userCollection.findOne(query);
+            res.send({isAdmin: user?.role === 'admin'})
+        });
+        // get admin data END
 
+        // set admin role START
+        app.patch('/users/admin/:id', async(req, res) => {
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)};
+            const options = {upsert: true};
+            const updatedDoc = {
+                $set: {
+                    role: 'admin'
+                }
+            }
+            const result = await userCollection.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+        // set admin role END
     }
     catch {
 
