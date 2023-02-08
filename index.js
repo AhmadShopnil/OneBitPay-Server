@@ -29,6 +29,7 @@ async function run() {
         const agentsRequests = client.db('OneBitPay').collection('agentsRequests');
         const blogsCollection = client.db('OneBitPay').collection('blogs'); const donationCollection = client.db('OneBitPay').collection('Donations');
         const cashInCollection = client.db('OneBitPay').collection('cashIn');
+        const loanApplicantsCollection = client.db("OneBitPay").collection("loanAPPlicants")
 
 
 
@@ -415,22 +416,64 @@ async function run() {
         });
         // set admin role END
 
-        // check user Role isAdmin or agent or normalUser
-        app.get('/userRole/:email', async (req, res) => {
-            const userEmail = req.params.email;
-            const query = { userEmail: userEmail }
-            const user = await userCollection.findOne(query);
-            const userRole = user?.role
-            res.send({
-                status: true,
-                data: userRole
-            })
+        // delete users START
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await userCollection.deleteOne(filter);
+            res.send(result);
+        });
+        // delete users END
 
+        // get all agents request START
+        app.get('/agents/request', async (req, res) => {
+            const query = {};
+            const agents = await agentsRequests.find(query).toArray();
+            res.send(agents)
+        });
+        // get all agents request END
+
+        // agent status changed START
+        app.patch('/users/agent/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    status: 'accepted'
+                }
+            }
+            const result = await agentsRequests.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+        // agent status changed END
+
+        // get all approved agents data START
+        app.get('/approvedAgents', async (req, res) => {
+            const query = { status: 'accepted' };
+            const allAgents = await agentsRequests.find(query).toArray();
+            res.send(allAgents)
+        });
+        // get all approved agents data END
+
+        // delete agent request START
+        app.delete('/agents/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await agentsRequests.deleteOne(filter);
+            res.send(result);
+        });
+        // delete agent request END
+        app.post("/loanApplicantData", async (req, res) => {
+            const loanApplicantData = req.body;
+            const result = await loanApplicantsCollection.insertOne(loanApplicantData)
+            res.send(result)
         })
     }
     catch {
 
     }
+
 
 
 }
