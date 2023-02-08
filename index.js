@@ -416,6 +416,46 @@ async function run() {
             res.send(result);
         });
         // set admin role END
+
+        // delete users START
+        app.delete('/users/:id', async(req, res) => {
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)};
+            const result = await userCollection.deleteOne(filter);
+            res.send(result);
+        });
+        // delete users END
+
+        // get all agents request START
+        app.get('/agents/request', async (req, res) => {
+            const query = {};
+            const agents = await agentsRequests.find(query).toArray();
+            res.send(agents)
+        });
+        // get all agents request END
+
+        // agent status changed START
+        app.patch('/users/agent/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: {
+                    status: 'accepted'
+                }
+            }
+            const result = await agentsRequests.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        });
+        // agent status changed END
+
+        // get all approved agents data START
+        app.get('/approvedAgents', async (req, res) => {
+            const query = {status: 'accepted'};
+            const allAgents = await agentsRequests.find(query).toArray();
+            res.send(allAgents)
+        });
+        // get all approved agents data END
     }
     catch {
 
