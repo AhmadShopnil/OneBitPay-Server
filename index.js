@@ -6,6 +6,7 @@ const port = process.env.PORT || 5000;
 const app = express();
 const crypto = require('crypto');
 const { toUnicode } = require('punycode');
+const { Console } = require('console');
 
 const sid = process.env.ACCOUNT_SID
 const authToken = process.env.AUTH_TOKEN
@@ -340,7 +341,13 @@ async function run() {
             const email = req.params.email;
             const query = { userEmail: email };
             const user = await userCollection.findOne(query);
-            res.send({ isUser: user.role === 'user' });
+            if(user){
+                res.send({userRole: user.role});
+            }else{
+                res.send({status: false})
+            }
+            // console.log({userRole: user.role})
+            // console.log(email);
         })
 
         // Cash in from agent account to user account
