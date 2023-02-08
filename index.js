@@ -383,28 +383,28 @@ async function run() {
             res.send(result);
         })
 
-          // get all users info from database START
-        app.get('/users', async(req, res) => {
+        // get all users info from database START
+        app.get('/users', async (req, res) => {
             const query = {};
             const users = await userCollection.find(query).toArray();
             res.send(users)
         });
         // get all users info from database END
-        
+
         // get admin data START
-        app.get('/users/admin/:email', async(req, res) => {
-            const email  = req.params.email;
-            const query = {email};
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
             const user = await userCollection.findOne(query);
-            res.send({isAdmin: user?.role === 'admin'})
+            res.send({ isAdmin: user?.role === 'admin' })
         });
         // get admin data END
 
         // set admin role START
-        app.patch('/users/admin/:id', async(req, res) => {
+        app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
-            const filter = {_id: ObjectId(id)};
-            const options = {upsert: true};
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
             const updatedDoc = {
                 $set: {
                     role: 'admin'
@@ -414,6 +414,19 @@ async function run() {
             res.send(result);
         });
         // set admin role END
+
+        // check user Role isAdmin or agent or normalUser
+        app.get('/userRole/:email', async (req, res) => {
+            const userEmail = req.params.email;
+            const query = { userEmail: userEmail }
+            const user = await userCollection.findOne(query);
+            const userRole = user?.role
+            res.send({
+                status: true,
+                data: userRole
+            })
+
+        })
     }
     catch {
 
