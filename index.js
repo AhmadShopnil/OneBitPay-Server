@@ -456,6 +456,15 @@ async function run() {
             res.send(allAgents)
         });
         // get all approved agents data END
+
+        // delete agent request START
+        app.delete('/agents/:id', async(req, res) => {
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)};
+            const result = await agentsRequests.deleteOne(filter);
+            res.send(result);
+        });
+        // delete agent request END
     }
     catch {
 
