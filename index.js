@@ -253,23 +253,23 @@ async function run() {
         //     res.send(result);
         // })
 
-        app.put('/userUpdate/:email', async (req, res) => {
-            const email = req.params.email;
+        app.put('/userUpdate', async (req, res) => {
             const updatedUserData = req.body;
+            const { name, address, userEmail, imageUrl, nidNumber, phnNumber, birthDate } = updatedUserData
             const query = {
-                userEmail: email
+                userEmail: updatedUserData?.userEmail
             };
             const options = {
                 upsert: true
             };
             const updatedDoc = {
                 $set: {
-                    name: updatedUserData.name,
-                    address: updatedUserData.address,
-                    imageUrl: updatedUserData.imageUrl,
-                    nidNumber: updatedUserData.nidNumber,
-                    phnNumber: updatedUserData.phnNumber,
-                    birthDate: updatedUserData.birthDate,
+                    name,
+                    address,
+                    imageUrl,
+                    nidNumber,
+                    phnNumber,
+                    birthDate
                 }
             };
             const result = await userCollection.updateOne(query, updatedDoc, options);
@@ -341,10 +341,10 @@ async function run() {
             const email = req.params.email;
             const query = { userEmail: email };
             const user = await userCollection.findOne(query);
-            if(user){
-                res.send({userRole: user.role});
-            }else{
-                res.send({status: false})
+            if (user) {
+                res.send({ userRole: user.role });
+            } else {
+                res.send({ status: false })
             }
             // console.log({userRole: user.role})
             // console.log(email);
@@ -476,7 +476,45 @@ async function run() {
             const result = await loanApplicantsCollection.insertOne(loanApplicantData)
             res.send(result)
         })
+
+        app.post('/agent/b2b', async (req, res) => {
+            const data = req.body;
+            const { receiverEmail, transferAmount, time, type, agentEmail } = data
+
+            const user = await userCollection.findOne({ userEmail: receiverEmail });
+            const agent = await userCollection.findOne({ userEmail: agentEmail });
+            const agentQuery = { userEmail: agentEmail };
+            const Agentoption = { upsert: true };
+            const AgentupdatedDoc = {
+                $set: {
+                    balance: parseInt(agent.balance) - parseInt(transferAmount),
+                }
+            }
+            const agentResult = await userCollection.updateOne(agentQuery, AgentupdatedDoc, Agentoption);
+            const userQuery = { userEmail: receiverEmail };
+            const userOption = { upsert: true };
+            const userUpdatedDoc = {
+                $set: {
+                    balance: parseInt(user.balance) + parseInt(transferAmount)
+                }
+            }
+            const userResult = await userCollection.updateOne(userQuery, userUpdatedDoc, userOption);
+
+            const transitionInfo = {
+                senderEmail: agentEmail,
+                receiverEmail,
+                amount: transferAmount,
+                time,
+                transactionId: crypto.randomBytes(6).toString('hex').toUpperCase(),
+                type,
+                notification: true
+            }
+            const result = await transactionCollection.insertOne(transitionInfo)
+            res.send(result)
+        })
+
     }
+
     catch {
 
     }
