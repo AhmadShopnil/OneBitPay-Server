@@ -475,7 +475,7 @@ async function run() {
             const loanApplicantData = req.body;
             const result = await loanApplicantsCollection.insertOne(loanApplicantData)
             res.send(result)
-        })
+        });
     }
     catch {
 
