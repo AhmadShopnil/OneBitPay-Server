@@ -27,7 +27,7 @@ async function run() {
         const userCollection = client.db('OneBitPay').collection('Users');
         const transactionCollection = client.db('OneBitPay').collection('Transactions');
         const rechargeCollection = client.db('OneBitPay').collection('rechargeCollection');
-        const agentsRequests = client.db('OneBitPay').collection('agentsRequests');
+        const agentsRequestsCollection = client.db('OneBitPay').collection('agentsRequests');
         const blogsCollection = client.db('OneBitPay').collection('blogs'); const donationCollection = client.db('OneBitPay').collection('Donations');
         const cashInCollection = client.db('OneBitPay').collection('cashIn');
         const loanApplicantsCollection = client.db("OneBitPay").collection("loanAPPlicants")
@@ -80,28 +80,6 @@ async function run() {
         })
         // get user  single info from database END
 
-
-        // //get transaction  info from database START -----------------------
-        // received history
-        // app.get('/transactionReceive/:email', async (req, res) => {
-        //     const email = req.params.email;
-        //     const query = { receiverEmail: email }
-        //     const result = await transactionCollection.find(query).toArray()
-
-        //     if (result) {
-        //         res.send({
-        //             status: true,
-        //             data: result
-        //         })
-        //     }
-        //     else {
-        //         res.send({
-        //             status: false,
-        //         })
-        //     }
-
-        // })
-
         // Sending history
         app.get('/transactionSend/:email', async (req, res) => {
             const email = req.params.email;
@@ -130,14 +108,6 @@ async function run() {
         // transfer money START
         app.put('/sendMoney', async (req, res) => {
             const sendMoneyInfo = req.body
-            // console.log(sendMoneyInfo)
-            // demo senderinfo
-            // const sendMoneyInfo = {
-            //     'senderEmail': 'shopnil@gmail.com',
-            //     'receiverEmail': 'rakib@gmail.com',
-            //     'amount': 1000
-            // }
-
             const { senderEmail, receiverEmail, amount, time, type } = sendMoneyInfo
 
             // Decrease amount receiver account
@@ -235,7 +205,7 @@ async function run() {
         //Inster agents requets data
         app.post('/agents/request', async (req, res) => {
             const agentInfo = req.body;
-            const result = await agentsRequests.insertOne(agentInfo);
+            const result = await agentsRequestsCollection.insertOne(agentInfo);
             res.send(result);
         })
 
@@ -435,22 +405,31 @@ async function run() {
         // get all agents request START
         app.get('/agents/request', async (req, res) => {
             const query = {};
-            const agents = await agentsRequests.find(query).toArray();
+            const agents = await agentsRequestsCollection.find(query).toArray();
             res.send(agents)
         });
         // get all agents request END
 
         // agent status changed START
-        app.patch('/users/agent/:id', async (req, res) => {
-            const id = req.params.id;
-            const filter = { _id: ObjectId(id) };
+        app.patch('/users/agent/:email', async (req, res) => {
+            const email = req.params.email;
+
+            const filter = { email: email };
+            const filter2 = { userEmail: email }
             const options = { upsert: true };
             const updatedDoc = {
                 $set: {
                     status: 'accepted'
                 }
             }
-            const result = await agentsRequests.updateOne(filter, updatedDoc, options);
+            const updatedDoc2 = {
+                $set: {
+                    role: 'agent'
+                }
+            }
+            const result = await agentsRequestsCollection.updateOne(filter, updatedDoc, options);
+
+            const result2 = await userCollection.updateOne(filter2, updatedDoc2, options);
             res.send(result);
         });
         // agent status changed END
@@ -458,7 +437,7 @@ async function run() {
         // get all approved agents data START
         app.get('/approvedAgents', async (req, res) => {
             const query = { status: 'accepted' };
-            const allAgents = await agentsRequests.find(query).toArray();
+            const allAgents = await agentsRequestsCollection.find(query).toArray();
             res.send(allAgents)
         });
         // get all approved agents data END
@@ -467,7 +446,7 @@ async function run() {
         app.delete('/agents/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
-            const result = await agentsRequests.deleteOne(filter);
+            const result = await agentsRequestsCollection.deleteOne(filter);
             res.send(result);
         });
         // delete agent request END
@@ -475,7 +454,13 @@ async function run() {
             const loanApplicantData = req.body;
             const result = await loanApplicantsCollection.insertOne(loanApplicantData)
             res.send(result)
-        })
+        });
+
+
+
+
+
+
     }
     catch {
 
