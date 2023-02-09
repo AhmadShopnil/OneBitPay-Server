@@ -30,7 +30,9 @@ async function run() {
         const agentsRequestsCollection = client.db('OneBitPay').collection('agentsRequests');
         const blogsCollection = client.db('OneBitPay').collection('blogs'); const donationCollection = client.db('OneBitPay').collection('Donations');
         const cashInCollection = client.db('OneBitPay').collection('cashIn');
-        const loanApplicantsCollection = client.db("OneBitPay").collection("loanAPPlicants")
+        const loanApplicantsCollection = client.db("OneBitPay").collection("loanAPPlicants");
+        const billCategoryCollection = client.db("OneBitPay").collection("billCategory");
+        const allCompaniesCollection = client.db("OneBitPay").collection("allCompanies");
 
 
 
@@ -490,7 +492,56 @@ async function run() {
             }
             const result = await transactionCollection.insertOne(transitionInfo)
             res.send(result)
-        })
+        });
+
+        // get all Bill Categories on Bill Pay Section
+        app.get('/billCategory', async (req, res) => {
+            const query = {};
+            const billCategory = await billCategoryCollection.find(query).toArray();
+            res.send(billCategory)
+        });
+
+        app.get('/allCompanies/:category_id', async (req, res) => {
+            const category_id = req.params.category_id;
+            const query = {category_id};
+            const allCompanies = await allCompaniesCollection.find(query).toArray();
+            res.send(allCompanies);
+        });
+
+        app.get('/bill/:id', async (req, res) => {
+            const id = req.params.id;
+            // console.log(id);
+            const query = {_id: ObjectId(id)};
+            const allCompanies = await allCompaniesCollection.findOne(query);
+            res.send(allCompanies);
+        });
+
+        app.put('/billing', async (req, res) => {
+            const data = req.body;
+            console.log(data)
+            const { billing_Date, customer_Id, billing_Amount} = data;
+
+            const user = await userCollection.findOne({ userEmail:customer_Id });
+
+            //Updating user billing-----------------------
+            const userQuery = {userEmail:customer_Id};
+            const userOption = { upsert: true };
+            const userUpdatedDoc = {
+                $set: {
+                    balance: parseInt(user.balance) - parseInt(billing_Amount)
+                }
+            }
+            const userResult = await userCollection.updateOne(userQuery, userUpdatedDoc, userOption);
+            const info = {
+                billing_Date,
+                customer_Id,
+                transactionId: crypto.randomBytes(6).toString('hex').toUpperCase(),
+                billing_Amount,
+                type:"billing"
+            }
+            const transactionInfo = await transactionCollection.insertOne(info)
+            res.send(transactionInfo)
+        });
 
     }
 
