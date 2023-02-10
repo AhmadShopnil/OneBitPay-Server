@@ -352,8 +352,8 @@ async function run() {
                 }
             }
             const userResult = await userCollection.updateOne(userQuery, userUpdatedDoc, userOption);
-
-            res.send({ userResult, agentResult })
+            const result = await cashInCollection.insertOne(data)
+            res.send(result);
         })
 
         app.get('/get/user/:email', async (req, res) => {
