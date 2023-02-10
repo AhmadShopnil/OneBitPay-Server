@@ -33,7 +33,7 @@ async function run() {
         const loanApplicantsCollection = client.db("OneBitPay").collection("loanAPPlicants");
         const billCategoryCollection = client.db("OneBitPay").collection("billCategory");
         const allCompaniesCollection = client.db("OneBitPay").collection("allCompanies");
-
+        const faqCollection = client.db("OneBitPay").collection("faq")
 
 
         // save user info in database
@@ -503,7 +503,7 @@ async function run() {
 
         app.get('/allCompanies/:category_id', async (req, res) => {
             const category_id = req.params.category_id;
-            const query = {category_id};
+            const query = { category_id };
             const allCompanies = await allCompaniesCollection.find(query).toArray();
             res.send(allCompanies);
         });
@@ -511,7 +511,7 @@ async function run() {
         app.get('/bill/:id', async (req, res) => {
             const id = req.params.id;
             // console.log(id);
-            const query = {_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const allCompanies = await allCompaniesCollection.findOne(query);
             res.send(allCompanies);
         });
@@ -519,12 +519,12 @@ async function run() {
         app.put('/billing', async (req, res) => {
             const data = req.body;
             console.log(data)
-            const { billing_Date, customer_Id, billing_Amount} = data;
+            const { billing_Date, customer_Id, billing_Amount } = data;
 
-            const user = await userCollection.findOne({ userEmail:customer_Id });
+            const user = await userCollection.findOne({ userEmail: customer_Id });
 
             //Updating user billing-----------------------
-            const userQuery = {userEmail:customer_Id};
+            const userQuery = { userEmail: customer_Id };
             const userOption = { upsert: true };
             const userUpdatedDoc = {
                 $set: {
@@ -537,11 +537,17 @@ async function run() {
                 customer_Id,
                 transactionId: crypto.randomBytes(6).toString('hex').toUpperCase(),
                 billing_Amount,
-                type:"billing"
+                type: "billing"
             }
             const transactionInfo = await transactionCollection.insertOne(info)
             res.send(transactionInfo)
         });
+        // faq data for faq page 
+        app.get('/faq', async (req, res) => {
+            const query = {}
+            const result = await faqCollection.find(query).toArray()
+            res.send(result)
+        })
 
     }
 
