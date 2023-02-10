@@ -542,7 +542,6 @@ async function run() {
             const transactionInfo = await transactionCollection.insertOne(info)
             res.send(transactionInfo)
         });
-
     }
 
     catch {
