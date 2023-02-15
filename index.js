@@ -38,16 +38,6 @@ async function run() {
 
         // save user info in database
         app.post('/addUser', async (req, res) => {
-
-            // demo user creation
-            // const user = {
-            //     'name': 'Shopnil',
-            //     'userEmail': 'shopnil@gmail.com',
-            //     'phone': '454544',
-            //     'balance': 20000,
-            //     'address': 'Tangail'
-            // }
-
             const user = req.body
             const result = await userCollection.insertOne(user)
             if (result.acknowledged) {
@@ -104,8 +94,6 @@ async function run() {
         })
 
         // get transaction info from database END
-
-
 
         // transfer money START
         app.put('/sendMoney', async (req, res) => {
@@ -452,6 +440,7 @@ async function run() {
             res.send(result);
         });
         // delete agent request END
+
         app.post("/loanApplicantData", async (req, res) => {
             const loanApplicantData = req.body;
             const result = await loanApplicantsCollection.insertOne(loanApplicantData)
@@ -547,7 +536,34 @@ async function run() {
             const query = {}
             const result = await faqCollection.find(query).toArray()
             res.send(result)
-        })
+        });
+
+
+        app.get('/loanRequestList', async (req, res) => {
+            const query = {}
+            const result = await loanApplicantsCollection.find(query).toArray()
+            res.send(result)
+        });
+
+
+        app.put('/approveLoanRequest', async (req, res) => {
+            const loanInfo = req.body;
+            const { receiverEmail, amount } = loanInfo;
+
+            // add amount receiver account
+            const result = await userCollection.findOne({ userEmail: receiverEmail });
+            const receiverBalance = result3.balance
+            const receiverNewBalance = parseInt(receiverBalance) + parseInt(amount);
+
+            const result2 = await userCollection.updateOne({ userEmail: receiverEmail }, { $set: { balance: receiverNewBalance } });
+
+            const result3 = await loanApplicantsCollection.updateOne({ email: receiverEmail }, { $set: { loanRequest: accepted } })
+
+            res.send(result3)
+
+        });
+
+
 
     }
 
