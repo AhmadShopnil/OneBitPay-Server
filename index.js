@@ -552,12 +552,12 @@ async function run() {
 
             // add amount receiver account
             const result = await userCollection.findOne({ userEmail: receiverEmail });
-            const receiverBalance = result3.balance
+            const receiverBalance = result?.balance
             const receiverNewBalance = parseInt(receiverBalance) + parseInt(amount);
 
             const result2 = await userCollection.updateOne({ userEmail: receiverEmail }, { $set: { balance: receiverNewBalance } });
 
-            const result3 = await loanApplicantsCollection.updateOne({ email: receiverEmail }, { $set: { loanRequest: accepted } })
+            const result3 = await loanApplicantsCollection.updateOne({ email: receiverEmail }, { $set: { loanRequest: "accepted" } })
 
             res.send(result3)
 
@@ -610,7 +610,7 @@ async function run() {
             const result = await loanApplicantsCollection.deleteOne(filter);
             res.send(result);
         });
-       
+
 
 
 
