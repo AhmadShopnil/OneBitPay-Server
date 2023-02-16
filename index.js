@@ -593,7 +593,15 @@ async function run() {
             const transactionInfo = await transactionCollection.insertOne(info)
 
             res.send(result2)
-        })
+        });
+
+        // loan request details 
+        app.get('/loanRequestDetails/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await loanApplicantsCollection.findOne(query)
+            res.send(result)
+        });
 
 
 
