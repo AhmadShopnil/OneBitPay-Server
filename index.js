@@ -564,6 +564,38 @@ async function run() {
         });
 
 
+        app.put('/withdraw', async (req, res) => {
+            const withdrawInfo = req.body
+            const { senderEmail, agentEmail, amount, time, type } = withdrawInfo
+            // Decrease amount receiver account
+            const result1 = await userCollection.findOne({ userEmail: senderEmail })
+            const senderBalance = result1.balance
+            const senderNewBalance = parseInt(senderBalance) - parseInt(amount)
+            const result2 = await userCollection.updateOne({ userEmail: senderEmail }, { $set: { balance: senderNewBalance } });
+
+            // add amount receiver account
+
+            const result3 = await userCollection.findOne({ userEmail: agentEmail })
+            const receiverBalance = result3.balance
+            const receiverNewBalance = parseInt(receiverBalance) + parseInt(amount)
+            const result4 = await userCollection.updateOne({ userEmail: agentEmail }, { $set: { balance: receiverNewBalance, notification: true } })
+
+            const info = {
+                senderEmail,
+                receiverEmail: agentEmail,
+                amount,
+                time,
+                transactionId: crypto.randomBytes(6).toString('hex').toUpperCase(),
+                type: "withdraw",
+
+            }
+
+            const transactionInfo = await transactionCollection.insertOne(info)
+
+            res.send(result2)
+        })
+
+
 
     }
 
