@@ -38,16 +38,6 @@ async function run() {
 
         // save user info in database
         app.post('/addUser', async (req, res) => {
-
-            // demo user creation
-            // const user = {
-            //     'name': 'Shopnil',
-            //     'userEmail': 'shopnil@gmail.com',
-            //     'phone': '454544',
-            //     'balance': 20000,
-            //     'address': 'Tangail'
-            // }
-
             const user = req.body
             const result = await userCollection.insertOne(user)
             if (result.acknowledged) {
@@ -104,8 +94,6 @@ async function run() {
         })
 
         // get transaction info from database END
-
-
 
         // transfer money START
         app.put('/sendMoney', async (req, res) => {
@@ -452,6 +440,7 @@ async function run() {
             res.send(result);
         });
         // delete agent request END
+
         app.post("/loanApplicantData", async (req, res) => {
             const loanApplicantData = req.body;
             const result = await loanApplicantsCollection.insertOne(loanApplicantData)
@@ -547,7 +536,83 @@ async function run() {
             const query = {}
             const result = await faqCollection.find(query).toArray()
             res.send(result)
-        })
+        });
+
+
+        app.get('/loanRequestList', async (req, res) => {
+            const query = {}
+            const result = await loanApplicantsCollection.find(query).toArray()
+            res.send(result)
+        });
+
+
+        app.put('/approveLoanRequest', async (req, res) => {
+            const loanInfo = req.body;
+            const { receiverEmail, amount } = loanInfo;
+
+            // add amount receiver account
+            const result = await userCollection.findOne({ userEmail: receiverEmail });
+            const receiverBalance = result3.balance
+            const receiverNewBalance = parseInt(receiverBalance) + parseInt(amount);
+
+            const result2 = await userCollection.updateOne({ userEmail: receiverEmail }, { $set: { balance: receiverNewBalance } });
+
+            const result3 = await loanApplicantsCollection.updateOne({ email: receiverEmail }, { $set: { loanRequest: accepted } })
+
+            res.send(result3)
+
+        });
+
+
+        app.put('/withdraw', async (req, res) => {
+            const withdrawInfo = req.body
+            const { senderEmail, agentEmail, amount, time, type } = withdrawInfo
+            // Decrease amount receiver account
+            const result1 = await userCollection.findOne({ userEmail: senderEmail })
+            const senderBalance = result1.balance
+            const senderNewBalance = parseInt(senderBalance) - parseInt(amount)
+            const result2 = await userCollection.updateOne({ userEmail: senderEmail }, { $set: { balance: senderNewBalance } });
+
+            // add amount receiver account
+
+            const result3 = await userCollection.findOne({ userEmail: agentEmail })
+            const receiverBalance = result3.balance
+            const receiverNewBalance = parseInt(receiverBalance) + parseInt(amount)
+            const result4 = await userCollection.updateOne({ userEmail: agentEmail }, { $set: { balance: receiverNewBalance, notification: true } })
+
+            const info = {
+                senderEmail,
+                receiverEmail: agentEmail,
+                amount,
+                time,
+                transactionId: crypto.randomBytes(6).toString('hex').toUpperCase(),
+                type: "withdraw",
+
+            }
+
+            const transactionInfo = await transactionCollection.insertOne(info)
+
+            res.send(result2)
+        });
+
+        // loan request details 
+        app.get('/loanRequestDetails/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await loanApplicantsCollection.findOne(query)
+            res.send(result)
+        });
+
+        // delete/cancel loan request
+        app.delete('/loanRequestList/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await loanApplicantsCollection.deleteOne(filter);
+            res.send(result);
+        });
+       
+
+
 
     }
 
