@@ -486,7 +486,7 @@ async function run() {
         // get all Bill Categories on Bill Pay Section
         app.get('/billCategory', async (req, res) => {
             const query = {};
-            const billCategory = await billCategoryCollection.find(query).toArray();
+            const billCategory = await billCategoryCollection.find(query).sort({$natural:-1}).toArray();
             res.send(billCategory)
         });
 
