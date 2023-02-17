@@ -611,7 +611,19 @@ async function run() {
             res.send(result);
         });
 
+        //Agent History 
+        app.get('/agent/history/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = {agentEmail: email};
+            const result = await cashInCollection.find(filter).toArray();
+            res.send(result)
+        })
 
+        app.get('/cashin', async (req, res) => {
+            const filter = {};
+            const result = await cashInCollection.find(filter).toArray();
+            res.send(result);
+        })
 
 
     }
