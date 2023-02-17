@@ -314,7 +314,7 @@ async function run() {
         app.put('/agent/cashin', async (req, res) => {
             const data = req.body;
             const { receiverEmail, agentEmail, amount } = data;
-            const commi = (parseInt(amount) / 100) * 8;
+            const commi = (parseInt(amount) / 100) * 7;
 
             const user = await userCollection.findOne({ userEmail: receiverEmail });
             const agent = await userCollection.findOne({ userEmail: agentEmail });
