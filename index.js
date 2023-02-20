@@ -626,6 +626,20 @@ async function run() {
         })
 
 
+        app.put('/news/earn', async (req, res) => {
+            const userDetails = req.body;
+            const {email, balance} = userDetails;
+            const filter = {userEmail: email};
+            const option = {upsert : true};
+            const updatedDoc = {
+                $set: {
+                    balance: balance + 0.75
+                }
+            }
+            const result = await userCollection.updateOne(filter, updatedDoc, option);
+            res.send(result);
+        })
+
     }
 
     catch {
