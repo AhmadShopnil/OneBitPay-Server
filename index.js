@@ -222,18 +222,35 @@ async function run() {
             const options = {
                 upsert: true
             };
-            const updatedDoc = {
-                $set: {
-                    name,
-                    address,
-                    imageUrl,
-                    nidNumber,
-                    phnNumber,
-                    birthDate
-                }
-            };
-            const result = await userCollection.updateOne(query, updatedDoc, options);
-            res.send(result);
+            if (imageUrl) {
+                const updatedDoc = {
+                    $set: {
+                        name,
+                        address,
+                        imageUrl,
+                        nidNumber,
+                        phnNumber,
+                        birthDate
+                    }
+                };
+                const result = await userCollection.updateOne(query, updatedDoc, options);
+                res.send(result);
+            }
+            if (!imageUrl) {
+                const updatedDoc = {
+                    $set: {
+                        name,
+                        address,
+                        nidNumber,
+                        phnNumber,
+                        birthDate
+                    }
+                };
+                const result = await userCollection.updateOne(query, updatedDoc, options);
+                res.send(result);
+
+            }
+
         })
 
 
@@ -486,7 +503,7 @@ async function run() {
         // get all Bill Categories on Bill Pay Section
         app.get('/billCategory', async (req, res) => {
             const query = {};
-            const billCategory = await billCategoryCollection.find(query).sort({$natural:-1}).toArray();
+            const billCategory = await billCategoryCollection.find(query).sort({ $natural: -1 }).toArray();
             res.send(billCategory)
         });
 
@@ -611,34 +628,8 @@ async function run() {
             res.send(result);
         });
 
-        //Agent History 
-        app.get('/agent/history/:email', async (req, res) => {
-            const email = req.params.email;
-            const filter = {agentEmail: email};
-            const result = await cashInCollection.find(filter).toArray();
-            res.send(result)
-        })
-
-        app.get('/cashin', async (req, res) => {
-            const filter = {};
-            const result = await cashInCollection.find(filter).toArray();
-            res.send(result);
-        })
 
 
-        app.put('/news/earn', async (req, res) => {
-            const userDetails = req.body;
-            const {email, balance} = userDetails;
-            const filter = {userEmail: email};
-            const option = {upsert : true};
-            const updatedDoc = {
-                $set: {
-                    balance: balance + 0.75
-                }
-            }
-            const result = await userCollection.updateOne(filter, updatedDoc, option);
-            res.send(result);
-        })
 
     }
 
