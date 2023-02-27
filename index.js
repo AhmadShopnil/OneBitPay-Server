@@ -5,6 +5,7 @@ require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
 const crypto = require('crypto');
+const jwt = require("jsonwebtoken");
 const { toUnicode } = require('punycode');
 const { Console } = require('console');
 
@@ -17,6 +18,23 @@ const clientMSG = require('twilio')(sid, authToken);
 app.use(cors());
 
 app.use(express.json());
+
+//JWT Authentication
+const verifyJWT = (req, res, next) => {
+    const authToken = req.headers.authorization;
+    console.log(authToken);
+    if(!authToken){
+        return res.status(401).send("Unauthorized access");
+    };
+    const token = authToken.split(' ')[1];
+    jwt.verify(token, process.env.USER_ACCESS_TOKEN, function(error, decoded){
+        if (error) {
+            return res.status(401).send("Unauthorized access");
+        };
+        req.decoded = decoded;
+        next();
+    });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.tus40xp.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -55,7 +73,7 @@ async function run() {
         })
 
         // get user  single info from database START
-        app.get('/user/:email', async (req, res) => {
+        app.get('/user/:email',verifyJWT, async (req, res) => {
             const email = req.params.email;
             const query = { userEmail: email }
             const result = await userCollection.findOne(query)
@@ -73,7 +91,7 @@ async function run() {
         // get user  single info from database END
 
         // Sending history
-        app.get('/transactionSend/:email', async (req, res) => {
+        app.get('/transactionSend/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const query = {};
             const allresult = await transactionCollection.find(query).sort({ $natural: -1 }).toArray();
@@ -96,7 +114,7 @@ async function run() {
         // get transaction info from database END
 
         // transfer money START
-        app.put('/sendMoney', async (req, res) => {
+        app.put('/sendMoney', verifyJWT, async (req, res) => {
             const sendMoneyInfo = req.body
             const { senderEmail, receiverEmail, amount, time, type } = sendMoneyInfo
 
@@ -153,7 +171,7 @@ async function run() {
         });
 
         // Mobile Recharge by shamim-s
-        app.post('/mobile/recharge', async (req, res) => {
+        app.post('/mobile/recharge', verifyJWT, async (req, res) => {
             const userDetail = req.body;
             const trxID = crypto.randomBytes(6).toString('hex').toUpperCase();
             const recharge = {
@@ -193,7 +211,7 @@ async function run() {
 
 
         //Inster agents requets data
-        app.post('/agents/request', async (req, res) => {
+        app.post('/agents/request', verifyJWT, async (req, res) => {
             const agentInfo = req.body;
             const result = await agentsRequestsCollection.insertOne(agentInfo);
             res.send(result);
@@ -213,7 +231,7 @@ async function run() {
         //     res.send(result);
         // })
 
-        app.put('/userUpdate', async (req, res) => {
+        app.put('/userUpdate', verifyJWT, async (req, res) => {
             const updatedUserData = req.body;
             const { name, address, userEmail, imageUrl, nidNumber, phnNumber, birthDate } = updatedUserData
             const query = {
@@ -328,7 +346,7 @@ async function run() {
         })
 
         // Cash in from agent account to user account
-        app.put('/agent/cashin', async (req, res) => {
+        app.put('/agent/cashin', verifyJWT, async (req, res) => {
             const data = req.body;
             const { receiverEmail, agentEmail, amount } = data;
             const commi = (parseInt(amount) / 100) * 7;
@@ -386,7 +404,7 @@ async function run() {
         // get admin data END
 
         // set admin role START
-        app.patch('/users/admin/:id', async (req, res) => {
+        app.patch('/users/admin/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
@@ -401,7 +419,7 @@ async function run() {
         // set admin role END
 
         // delete users START
-        app.delete('/users/:id', async (req, res) => {
+        app.delete('/users/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await userCollection.deleteOne(filter);
@@ -410,7 +428,7 @@ async function run() {
         // delete users END
 
         // get all agents request START
-        app.get('/agents/request', async (req, res) => {
+        app.get('/agents/request', verifyJWT, async (req, res) => {
             const query = {};
             const agents = await agentsRequestsCollection.find(query).toArray();
             res.send(agents)
@@ -458,13 +476,13 @@ async function run() {
         });
         // delete agent request END
 
-        app.post("/loanApplicantData", async (req, res) => {
+        app.post("/loanApplicantData", verifyJWT, async (req, res) => {
             const loanApplicantData = req.body;
             const result = await loanApplicantsCollection.insertOne(loanApplicantData)
             res.send(result)
         });
 
-        app.post('/agent/b2b', async (req, res) => {
+        app.post('/agent/b2b', verifyJWT, async (req, res) => {
             const data = req.body;
             const { receiverEmail, transferAmount, time, type, agentEmail } = data
 
@@ -522,7 +540,7 @@ async function run() {
             res.send(allCompanies);
         });
 
-        app.put('/billing', async (req, res) => {
+        app.put('/billing', verifyJWT, async (req, res) => {
             const data = req.body;
             console.log(data)
             const { billing_Date, customer_Id, billing_Amount } = data;
@@ -556,14 +574,14 @@ async function run() {
         });
 
 
-        app.get('/loanRequestList', async (req, res) => {
+        app.get('/loanRequestList', verifyJWT, async (req, res) => {
             const query = {}
             const result = await loanApplicantsCollection.find(query).toArray()
             res.send(result)
         });
 
 
-        app.put('/approveLoanRequest', async (req, res) => {
+        app.put('/approveLoanRequest', verifyJWT, async (req, res) => {
             const loanInfo = req.body;
             const { receiverEmail, amount, id } = loanInfo;
 
@@ -581,7 +599,7 @@ async function run() {
         });
 
 
-        app.put('/withdraw', async (req, res) => {
+        app.put('/withdraw', verifyJWT, async (req, res) => {
             const withdrawInfo = req.body
             const { senderEmail, agentEmail, amount, time, type } = withdrawInfo
             // Decrease amount receiver account
@@ -621,13 +639,31 @@ async function run() {
         });
 
         // delete/cancel loan request
-        app.delete('/loanRequestList/:id', async (req, res) => {
+        app.delete('/loanRequestList/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await loanApplicantsCollection.deleteOne(filter);
             res.send(result);
         });
 
+        app.get('/agent/history/:email', verifyJWT, async(req, res) => {
+            const email = req.params.email;
+            const filter = {agentEmail: email};
+            const result = await cashInCollection.find(filter).toArray();
+            res.send(result);
+        })
+
+        //Verify jwt authorization
+        app.get('/jwt/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = {userEmail: email};
+            const user = await userCollection.findOne(query);
+            if(user && user?.userEmail){
+              const token = jwt.sign(user, process.env.USER_ACCESS_TOKEN,{expiresIn:'12h'});
+              return res.send({accessToken: token});
+            }
+            res.status(401).send("Unauthorized accrss");
+          })
 
 
 
