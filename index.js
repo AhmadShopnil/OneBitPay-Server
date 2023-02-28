@@ -22,7 +22,6 @@ app.use(express.json());
 //JWT Authentication
 const verifyJWT = (req, res, next) => {
     const authToken = req.headers.authorization;
-    console.log(authToken);
     if(!authToken){
         return res.status(401).send("Unauthorized access");
     };
@@ -659,7 +658,7 @@ async function run() {
             const query = {userEmail: email};
             const user = await userCollection.findOne(query);
             if(user && user?.userEmail){
-              const token = jwt.sign(user, process.env.USER_ACCESS_TOKEN,{expiresIn:'12h'});
+              const token = jwt.sign(user, process.env.USER_ACCESS_TOKEN,{expiresIn:'1d'});
               return res.send({accessToken: token});
             }
             res.status(401).send("Unauthorized accrss");
